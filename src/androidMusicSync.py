@@ -24,7 +24,8 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-destAddress="/home/batman/myZone/temp"
+#destAddress="/home/batman/myZone/temp"
+destAddress="/run/user/1000/gvfs/mtp:host=%5Busb%3A002%2C010%5D/Internal storage/Music/Songs/English/Artiste"
 
 #copy Music ie mp3/flac files to destAddress and arrange it by Artist/SongName
 def copyMusicFiles(mypath):
@@ -60,7 +61,8 @@ def copyMusicFiles(mypath):
                     destFile=os.path.join(tempDir,(str(audioMeta["Title"][0].encode('ascii','ignore'))))+".flac"
                 elif(file.lower().endswith('.mp3')):
                     destFile=os.path.join(tempDir,(str(audioMeta["Title"][0].encode('ascii','ignore'))))+".mp3"
-                shutil.copy (file, destFile)
+                if not os.path.exists(destFile):
+                    shutil.copyfile(file, destFile)
 
             except KeyError:
                 print (bcolors.FAIL + "ERROR : FILE DIDNT COPY" + bcolors.ENDC )    
