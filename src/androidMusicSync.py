@@ -12,7 +12,6 @@
 import os
 import re
 import shutil
-import pymtp
 
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3NoHeaderError
@@ -29,29 +28,34 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-#destAddress="/home/batman/myZone/temp"
-destAddress="/run/user/1000/gvfs/mtp:host=%5Busb%3A002%2C017%5D/Internal storage/Music/Songs/English/Artiste"
+#Destination path of copying media
+basePath="/run/user/1000/gvfs"
+destAddress="/home/batman/myZone/temp"
 
-#load MTP Device and do required stuff
-def loadDevice(mypath):
-    mtp = pymtp.MTP()
-    try:
-        mtp.connect()
-        print (bcolors.OKBLUE + mtp.get_manufacturer() + " : " + mtp.get_modelname() + bcolors.ENDC + " DETECTED" )    
+#load MTP Device 
+def loadDevice():
+    dir = os.listdir(basePath)
+    if not dir:
+        print (bcolors.FAIL + "ERROR : NO DEVICE DETECTED" + bcolors.ENDC )
+    else:
+        global destAddress
+        destAddress = os.path.join(os.path.join(basePath,dir[0]),"Internal storage/Music/Songs/English/Artiste")
 
-        #copying music files
-        copyMusicFiles(mypath)
+#create the same playlist with different media paths in it
+def createPlaylist():
+    pass
+        
 
-        mtp.disconnect()
-    except pymtp.NoDeviceConnected:
-        print (bcolors.FAIL + "ERROR : NO DEVICE DETECTED" + bcolors.ENDC )    
-
+#copy Playlist = copy songs + create playlist
+def copyPlaylist():
+    createPlaylist()
+    
 
 #copy Music ie mp3/flac files to destAddress and arrange it by Artist/SongName
-def copyMusicFiles(mypath):
-    fileName = mypath
+def copyMusicFiles(filePath):
+    filePath = filePath
     
-    with open(fileName) as f:
+    with open(filePath) as f:
         content = f.readlines()
     f.close()
 
@@ -76,18 +80,15 @@ def copyMusicFiles(mypath):
                 tempDir=os.path.join(destAddress,(str(audioMeta["Artist"][0].encode('ascii','ignore'))))              
                 
                 if not os.path.exists(tempDir):
-                    print(tempDir)
-                    #os.makedirs(tempDir,0777)
+                    os.makedirs(tempDir)
 
                 if(file.lower().endswith('.flac')):
                     destFile=os.path.join(tempDir,(str(audioMeta["Title"][0].encode('ascii','ignore'))))+".flac"
                 elif(file.lower().endswith('.mp3')):
                     destFile=os.path.join(tempDir,(str(audioMeta["Title"][0].encode('ascii','ignore'))))+".mp3"
                 if not os.path.exists(destFile):
-                    pass
-                    #shutil.copyfile(file, destFile)
-                    #mtp.send_file_from_file(file, destFile, parent=0)
-
+                    shutil.copyfile(file, destFile)
+                    
             except KeyError:
                 print (bcolors.FAIL + "ERROR : FILE DIDNT COPY" + bcolors.ENDC )    
 
@@ -101,10 +102,10 @@ def main():
     if(len(mypath)==0):
 		mypath = "."
     if(os.path.exists(mypath)):
-        loadDevice(mypath)
-        #copyMusicFiles(mypath)
+        loadDevice()
+        copyMusicFiles(mypath)
     else:
-        print (bcolors.FAIL + "ERROR : NO SUCH PATH" + bcolors.ENDC )    
+        print (bcolors.FAIL + "ERROR : NO SUCH FILE FOUND" + bcolors.ENDC )    
     
 if __name__ == '__main__':
    main()
@@ -112,3 +113,15 @@ if __name__ == '__main__':
 
 #To infinity and beyond...
 # \m/ W!LSP! \m/ 
+
+'''
+TO do
+* KeyError : No meta found, copy with file name
+* Identify android Device
+* Identify Songs Location on Internal Storage as well as SD Card
+* Make it Platform independent
+* Make it universal for all devices
+* option to copy all songs to one folder or by artist
+* More playlist types other than .m3u
+
+'''
